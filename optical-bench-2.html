@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Optical Bench</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#f6f6f4;--card:#fff;--ink:#1a1a1a;--mut:#6b6b66;--line:#e2e2dd;--acc:#1a1a1a;--canvas:#fff;--th:#5b76a8;--row:#e8eef8;--ok:#1d7a3a;--bad:#c0392b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141413;--card:#1e1e1c;--ink:#ecece8;--mut:#9a9a93;--line:#34342f;--acc:#ecece8;--canvas:#111110;--th:#3f5680;--row:#23283a;--ok:#5fd07f;--bad:#ff7a6b}}
+:root[data-theme="dark"]{--bg:#141413;--card:#1e1e1c;--ink:#ecece8;--mut:#9a9a93;--line:#34342f;--acc:#ecece8;--canvas:#111110;--th:#3f5680;--row:#23283a;--ok:#5fd07f;--bad:#ff7a6b}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 "Inter","Segoe UI",system-ui,sans-serif}
+header{display:flex;justify-content:space-between;padding:14px 24px;background:var(--card);border-bottom:1px solid var(--line)}
+h1{font-size:18px;margin:0}h2{font-size:15px;margin:0 0 10px}h3{font-size:14px;margin:16px 0 6px}
+.sub{color:var(--mut);font-size:12px}.na{text-align:right}.na b{font-size:22px;display:block}
+main{display:grid;grid-template-columns:330px minmax(0,1fr);gap:20px;padding:20px 24px;max-width:1350px;margin:auto}
+@media(max-width:860px){main{grid-template-columns:1fr;padding:12px}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}.col{display:flex;flex-direction:column;gap:20px;min-width:0}
+label{display:block;font-size:12px;color:var(--mut);margin:8px 0 3px}.row{display:flex;justify-content:space-between;align-items:center}
+input,select{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit}
+input[type=range]{padding:0}input[type=checkbox]{width:auto}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:8px}button:hover{background:var(--bg)}
+:focus-visible{outline:2px solid var(--th);outline-offset:1px}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}.wide{grid-column:1/-1}
+.dark{background:var(--acc);color:var(--card);width:100%;margin-top:12px}.dark:hover{opacity:.85;background:var(--acc)}
+.el{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}.el .hd{display:flex;justify-content:space-between;font-weight:600}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px}.del{padding:0 8px;border:0;background:none;color:var(--mut)}
+canvas{width:100%;display:block;border:1px solid var(--line);border-radius:8px;background:var(--canvas)}
+.formula{font:12px ui-monospace,Menlo,monospace;background:var(--bg);padding:10px 12px;border-radius:8px;color:var(--mut);overflow-x:auto;white-space:nowrap}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.out{border:1px solid var(--line);border-radius:8px;text-align:center;padding:10px}.out span{font-size:11px;color:var(--mut);display:block}.out b{font-size:16px}
+.tw{overflow-x:auto;margin-top:12px;border-radius:8px;border:1px solid var(--line)}table{width:100%;border-collapse:collapse}
+th{background:var(--th);color:#fff;text-align:left;padding:8px 12px}td{padding:7px 12px;background:var(--row);font-size:13px}
+.det{display:flex;justify-content:center}.ok{color:var(--ok);font-weight:600}.bad{color:var(--bad);font-weight:600}
+#stat{font-size:12px;color:var(--mut);margin-top:8px}
+canvas#cv{cursor:grab;touch-action:pan-y}
+</style></head><body>
+<header><div><h1>Optical Bench</h1><div class="sub">Geometrical optics ray-tracing workbench (paraxial)</div></div>
+<div class="na"><span class="sub">Objective NA</span><b id="naTop">–</b><span class="sub" id="naSub"></span></div></header>
+<main>
+<aside class="card">
+<h3 style="margin-top:0">Object</h3>
+<label for="obj">Object type</label><select id="obj"><option value="line">Line segment</option><option value="pt">Point source</option><option value="F">Letter F</option></select>
+<div class="g"><div><label for="oh">Height Y (mm)</label><input type="number" id="oh" value="10" step="any"></div><div><label for="x0">Position (cm)</label><input type="number" id="x0" value="0" step="any"></div></div>
+<h3>Illumination</h3>
+<div class="g"><div><label for="ill">Type</label><select id="ill"><option value="mono">Monochromatic</option><option value="white">White light</option></select></div><div id="lamW"><label for="lam">λ (nm)</label><input type="number" id="lam" value="550" min="380" max="780" step="any"></div></div>
+<h3>Beam</h3>
+<label for="char">Character</label><select id="char"><option value="div">Divergent</option><option value="col">Collimated</option><option value="conv">Convergent</option></select>
+<div class="row"><label for="ang" id="angL">Half-angle</label><span id="angV">12°</span></div><input type="range" id="ang" min="0" max="30" step="1" value="12">
+<h3>Immersion medium (objective ↔ sample)</h3>
+<label for="med">Medium preset</label><select id="med"><option value="1">Air (n=1)</option><option value="1.333">Water (n=1.333)</option><option value="1.473">Glycerin (n=1.473)</option><option value="1.515">Oil (n=1.515)</option></select>
+<div class="row"><label for="n">Refractive index n</label><span id="nV">1.000</span></div><input type="range" id="n" min="1" max="1.6" step="0.001" value="1">
+<div class="sub">The index changes the power of the objective’s front surface, so focus and blur change too. NA = n·sin θ.</div>
+<h3>Detector (CCD)</h3><label for="det">Position from object (cm)</label><input type="number" id="det" value="60" step="any">
+<h3>Optical elements</h3><div id="els"></div>
+<div class="btns"><button data-add="lens">+ Lens</button><button data-add="aperture">+ Aperture</button><button data-add="slit">+ Slit</button><button data-add="grating">+ Grating</button><button class="wide" id="relay">Infinity-corrected relay</button><label class="wide"><input type="checkbox" id="ocChk" checked> Add ocular + eye (CCD = retina)</label><button id="rstL">Reset lenses</button><button id="rstA">Reset all</button></div>
+<div class="sub" style="margin-top:6px">The first lens is the objective. Adds a collimator (parallel beam), a tube lens and, if ticked, an ocular with the eye at its exit pupil. Otherwise the CCD sits at the primary image plane.</div>
+</aside>
+<div class="col">
+<section class="card"><div class="row"><h2>Ray-trace layout</h2><div><button id="zin" aria-label="Zoom in">＋</button> <button id="zout" aria-label="Zoom out">−</button> <button id="zfit">Fit</button></div></div><canvas id="cv" width="1000" height="380"></canvas><div id="stat"></div><div id="micro" style="display:none;margin-top:10px"><div class="tw" style="margin-top:0"><table id="microT"></table></div><div class="sub" style="margin-top:6px">+ = upright, − = inverted relative to the object. M<sub>oc</sub> is the angular magnification against the unaided eye at 250 mm. After changing an f, press the relay button again to re-place the lenses.</div></div>
+<div class="sub" style="margin-top:6px">Wheel = zoom both axes (Shift: x only, Alt: y only); drag = pan. Rays are coloured by wavelength; dashed = diffracted orders; teal dashed lines = principal planes H, H′ of thick lenses.</div></section>
+<section class="card"><h2>Object and detector image</h2><div class="det" style="gap:16px;flex-wrap:wrap"><figure style="margin:0;text-align:center"><canvas id="obv" width="300" height="300" style="width:240px"></canvas><figcaption class="sub">Object</figcaption></figure><figure style="margin:0;text-align:center"><canvas id="ccd" width="300" height="300" style="width:240px"></canvas><figcaption class="sub">CCD image</figcaption></figure></div><div class="sub" style="text-align:center;margin-top:6px">Both views look along the direction of the light, ±30 mm. One converging lens gives an inverted, reversed image (rotated 180°); two imaging stages bring it upright.</div></section>
+<section class="card"><h2>Depth of Focus (D.O.F.) and Depth of Field</h2>
+<div class="formula">D.O.F. = (d × 250,000) / (NA × M) + λ / (2·NA²) (µm) | Depth of Field = D.O.F. / M²</div>
+<div class="g2"><div><label for="dNA">Numerical Aperture (NA)</label><input type="number" id="dNA" step="any"></div><div><label for="dL">Wavelength λ (nm)</label><input type="number" id="dL" value="550" step="any"></div>
+<div><label for="dM">Magnification M (×)</label><input type="number" id="dM" value="10" step="any"></div><div><label for="dW">Observer resolution d</label><input type="number" id="dW" value="0.0014" step="any"></div></div>
+<div class="row" style="margin-top:8px"><label><input type="checkbox" id="sync" checked> Link NA and λ to the bench</label><button id="useM">Use bench M</button></div>
+<div class="g2" style="margin-top:10px"><div class="out"><span>D.O.F. (depth of focus)</span><b id="oDoF"></b></div><div class="out"><span>Depth of Field</span><b id="oDoFd"></b></div></div>
+<button class="dark" id="addCfg">+ Add configuration to table</button>
+<div class="tw"><table><thead><tr><th>Magnification</th><th>Numerical Aperture</th><th>D.O.F. (µm)</th><th>Depth of Field (µm)</th><th></th></tr></thead><tbody id="tb"></tbody></table></div></section>
+<section class="card"><h2>Verification</h2><div class="sub" style="margin-bottom:8px">Checks run on load: your reference numbers plus the optics laws behind each feature.</div>
+<div class="tw"><table><thead><tr><th>Check</th><th>Expected</th><th>Got</th><th></th></tr></thead><tbody id="tests"></tbody></table></div></section>
+</div></main>
+<script>
+const $=id=>document.getElementById(id),PI=Math.PI,rad=x=>x*PI/180,deg=x=>x*180/PI;
+let uid=0;const mk=(t,o)=>({t,id:++uid,x:20,...o});
+const lens0=(o={})=>mk('lens',{x:30,lt:'biconvex',mode:'thin',n:1.5,R1:150,R2:-150,th:8,D:40,...o});
+const preset=(f,n=1.5)=>({lt:'biconvex',mode:'thin',n,R1:2*(n-1)*f,R2:-2*(n-1)*f,th:8,D:40});
+let els=[lens0()],cfgs=[];
+const LAB={lens:'Lens',aperture:'Aperture',slit:'Slit',grating:'Grating'},LT=['biconvex','plano-convex','meniscus-convex','biconcave','plano-concave','meniscus-concave','custom'];
+/* ---------- physics ---------- */
+const REF=550,nl=(e,l)=>e.n+0.0042*(1e6/(l*l)-1e6/(REF*REF)); // n given at 550 nm, Cauchy dispersion
+const pw=(a,b,R)=>R?(b-a)/R:0;
+const thk=e=>e.t==='lens'&&e.mode==='thick'?e.th:0;
+function LM(e,n1,n2,l){const ng=nl(e,l),t=thk(e),P1=pw(n1,ng,e.R1),P2=pw(ng,n2,e.R2),d=t/ng; // system matrix on (y, n·slope)
+ return{ng,t,P1,P2,B:d,A:1-d*P1,C:-P1-P2*(1-d*P1),D:1-P2*d}}
+const fAir=e=>-1/LM(e,1,1,REF).C;
+function planes(e,n1,n2,l){const m=LM(e,n1,n2,l);return{hF:n1*(m.D-1)/m.C,hB:n2*(1-m.A)/m.C}} // mm from entry / exit vertex
+function setType(e,type){const f0=Math.abs(fAir(e))||150,k=(e.n-1)*f0;e.lt=type;
+ const T={biconvex:[2*k,-2*k],'plano-convex':[k,0],'meniscus-convex':[k/2,k],biconcave:[-2*k,2*k],'plano-concave':[0,k],'meniscus-concave':[k,k/2]}[type];if(T){e.R1=T[0];e.R2=T[1]}}
+function wl2rgb(w){let r=0,g=0,b=0;if(w<440){r=(440-w)/60;b=1}else if(w<490){g=(w-440)/50;b=1}else if(w<510){g=1;b=(510-w)/20}else if(w<580){r=(w-510)/70;g=1}else if(w<645){r=1;g=(645-w)/65}else r=1;return[r,g,b]}
+function gratOrders(al,phi,l,n,lines,refl){const k=(l/1000)/(n*(1000/lines)),thi=al-phi,o=[];
+ for(let m=-3;m<=3;m++){const s=refl?m*k-Math.sin(thi):Math.sin(thi)+m*k;if(Math.abs(s)>1)continue;const t=Math.asin(s);o.push({m,ao:refl?PI+phi+t:phi+t})}return o}
+const act=P=>P.els.filter(e=>e.x>0&&P.X0+e.x<P.X0+P.det).sort((a,b)=>a.x-b.x);
+const FR=[[0,.14,0,1],[0,.65,.86,1],[0,.5,.46,.6]]; // letter F as rectangles (unit height)
+function fpts(H,st=.05){const o=[];for(let i=0;i*st<=.65+1e-9;i++)for(let j=0;j*st<=1+1e-9;j++){const x=i*st,y=j*st;if(FR.some(([a,b,c,d])=>x>=a-1e-9&&x<=b+1e-9&&y>=c-1e-9&&y<=d+1e-9))o.push([(x-.3)*H,(y-.5)*H])}return o}
+function cone(nr,T){const o=[];for(let i=0;i<nr;i++){const r=Math.sqrt((i+.5)/nr)*T,a=i*2.39996323;o.push([r*Math.cos(a),r*Math.sin(a)])}return o}
+function trace(P,L,y0,s0,l,segs,w0=0,sw0=0){ // x in cm; y, w in mm; u = n·slope (y), uw = n·slope (w)
+ const hits=[],ob=L.find(e=>e.t==='lens'),n0=ob?P.nMed:1,xd=P.X0+P.det;
+ let rays=[{x:P.X0,y:y0,w:w0,u:n0*s0,uw:n0*sw0,n:n0,m:0}];
+ const Y=(r,x)=>r.y+r.u/r.n*(x-r.x)*10,Wd=(r,x)=>r.w+r.uw/r.n*(x-r.x)*10;
+ for(const e of L){const xe=P.X0+e.x,t=thk(e),xi=xe-t/20,xo=xe+t/20,nx=[];
+  for(const r of rays){const push=(x1,y1,x2,y2,m)=>segs&&segs.push({x1,y1,x2,y2,m,l});
+   if(e.t==='lens'){const y=Y(r,xi),w=Wd(r,xi),hf=e.D/2;push(r.x,r.y,xi,y,r.m);if(Math.hypot(y,w)>hf)continue;
+    const M=LM(e,r.n,1,l),u1=r.u-y*M.P1,v1=r.uw-w*M.P1,y1=y+u1/M.ng*t,w1=w+v1/M.ng*t;push(xi,y,xo,y1,r.m);if(Math.hypot(y1,w1)>hf)continue;
+    nx.push({x:xo,y:y1,w:w1,u:u1-y1*M.P2,uw:v1-w1*M.P2,n:1,m:r.m})}
+   else if(e.t==='grating'){const y=Y(r,xe),w=Wd(r,xe);push(r.x,r.y,xe,y,r.m);const refl=e.gm==='reflection';
+    for(const o of gratOrders(Math.atan(r.u/r.n),rad(e.phi||0),l,r.n,e.lines,refl)){const m=r.m+(o.m?1:0);
+     if(Math.cos(o.ao)>1e-9)nx.push({x:xe,y,w,u:r.n*Math.tan(o.ao),uw:r.uw,n:r.n,m});
+     else push(xe,y,0,y+Math.tan(o.ao)*(0-xe)*10,1)}} // in-plane approximation for out-of-plane rays; reflected order drawn back
+   else{const y=Y(r,xe),w=Wd(r,xe);push(r.x,r.y,xe,y,r.m);if((e.t==='slit'?Math.abs(y):Math.hypot(y,w))>=e.D/2)continue;nx.push({x:xe,y,w,u:r.u,uw:r.uw,n:r.n,m:r.m})}}
+  rays=nx.length>4000?nx.slice(0,4000):nx}
+ for(const r of rays){const y=Y(r,xd);segs&&segs.push({x1:r.x,y1:r.y,x2:xd,y2:y,m:r.m,l});hits.push({y,w:Wd(r,xd),m:r.m})}
+ return{hits,rays}}
+function fan(P,nr){const A=rad(P.ang),HB=P.line?P.H/2:5,o=[];
+ for(let i=0;i<nr;i++){const f=nr>1?2*i/(nr-1)-1:0;
+  o.push(P.char==='div'?[0,Math.tan(A*f)]:P.char==='col'?[f*HB,Math.tan(A)]:[f*HB,-f*Math.tan(A)])}return o}
+const pts=(P,n)=>P.char==='div'&&P.line?Array.from({length:n},(_,i)=>P.H*(i/(n-1)-.5)):[0];
+const lams=P=>P.white?[450,550,650]:[P.lam];
+function spot(P,l){const L=act(P),h=[];for(const [dy,s] of fan(P,61))for(const q of trace(P,L,dy,s,l).hits)if(!q.m)h.push(q.y);
+ if(h.length<2)return NaN;const m=h.reduce((a,b)=>a+b)/h.length;return Math.sqrt(h.reduce((a,b)=>a+(b-m)**2,0)/h.length)}
+function objInfo(P){const ob=act(P).find(e=>e.t==='lens');if(!ob)return null;const dist=ob.x*10-thk(ob)/2,th=Math.atan(ob.D/2/dist);return{ob,dist,th,NA:P.nMed*Math.sin(th)}}
+function benchM(P){const o=objInfo(P);if(!o)return NaN;const r=trace(P,act(P),1,-1/o.dist,REF).hits.find(q=>!q.m);return r?r.y:NaN}
+function relayBuild(P,fc=100,ft=200,gap=10,oc=false){const ob=act(P).find(e=>e.t==='lens'&&!e.relay);if(!ob)return null;
+ const r=trace({...P,det:1e4},[ob],0,1e-3,REF).rays[0];if(!r)return null;const s=r.u/r.n;if(s>=-1e-12)return null; // virtual image
+ const xi=r.x+(-r.y/s)/10,xc=xi+fc/10,xt=xc+gap;
+ const R={c:mk('lens',{...preset(fc),x:xc-P.X0,name:'Collimator',relay:'col'}),t:mk('lens',{...preset(ft),x:xt-P.X0,name:'Tube lens',relay:'tube'}),det:xt+ft/10-P.X0};
+ if(oc){const fo=25,fe=17,xo=xt+ft/10+fo/10,o=mk('lens',{...preset(fo),D:20,x:xo-P.X0,name:'Ocular',relay:'oc'}), // primary image at the ocular front focal plane
+  q=trace({...P,det:1e4},[ob,R.c,R.t,o],1,-1/(ob.x*10-thk(ob)/2),REF).rays[0],xp=q?q.x+(-q.y/q.u)/10:NaN, // exit pupil = where the chief ray crosses the axis
+  xe=xp>xo+.2&&xp<xo+60?xp:xo+2;R.o=o;R.e=mk('lens',{...preset(fe),D:4,x:xe-P.X0,name:'Eye',relay:'eye'});R.det=xe+fe/10-P.X0}
+ return R}
+function bundleSlopes(P,L,yo,l,col){const xo=P.X0+col.x+thk(col)/20,o=[];
+ for(const [dy,s] of fan(P,21)){const sg=[];trace(P,L,yo+dy,s,l,sg);for(const g of sg)if(!g.m&&Math.abs(g.x1-xo)<1e-9&&g.x2>g.x1)o.push((g.y2-g.y1)/((g.x2-g.x1)*10))}return o}
+const dofCalc=(NA,l,M,d)=>{const D=d*250000/(NA*M)+l*1e-3/(2*NA*NA);return{D,Dd:D/(M*M)}};
+/* ---------- UI state ---------- */
+const params=()=>({X0:+$('x0').value||0,det:+$('det').value||1,nMed:+$('n').value,char:$('char').value,ang:+$('ang').value,line:$('obj').value!=='pt',F:$('obj').value==='F',H:+$('oh').value||0,lam:+$('lam').value||550,white:$('ill').value==='white',els});
+function renderEls(){const box=$('els');box.innerHTML='';
+ els.forEach((e,i)=>{const d=document.createElement('div');d.className='el';
+  const num=(k,l)=>`<div><label>${l}</label><input type="number" step="any" data-k="${k}" value="${e[k]}"></div>`;
+  const sel=(k,l,o)=>`<div><label>${l}</label><select data-s="${k}">${o.map(v=>`<option${e[k]===v?' selected':''}>${v}</option>`).join('')}</select></div>`;
+  let b=num('x','Position (cm)');
+  if(e.t==='lens')b+=sel('lt','Lens type',LT)+sel('mode','Model',['thin','thick'])+num('n','Index n (550 nm)')+num('D','Diameter (mm)')+num('R1','R1 (mm, 0 = flat)')+num('R2','R2 (mm, 0 = flat)')+(e.mode==='thick'?num('th','Thickness (mm)'):'')+`<div><label>f in air (mm)</label><input type="number" step="any" data-f value="${+fAir(e).toFixed(2)}"></div>`;
+  else if(e.t==='grating')b+=sel('gm','Mode',['transmission','reflection'])+num('lines','Lines/mm')+num('phi','Normal angle (°)');
+  else b+=num('D',e.t==='slit'?'Opening (mm, 0 = closed)':'Opening Ø (mm, 0 = closed)');
+  d.innerHTML=`<div class="hd"><span>${e.name||LAB[e.t]+' #'+(i+1)}</span><button class="del" aria-label="Delete element">✕</button></div><div class="g">${b}</div>`;
+  d.querySelector('.del').onclick=()=>{els.splice(i,1);renderEls();draw()};
+  const upd=()=>{const f=d.querySelector('[data-f]');if(f)f.value=+fAir(e).toFixed(2)};
+  d.querySelectorAll('input[data-k]').forEach(inp=>inp.oninput=()=>{const v=parseFloat(inp.value);if(isNaN(v))return;e[inp.dataset.k]=v;
+   if(['R1','R2'].includes(inp.dataset.k))e.lt='custom';upd();draw()});
+  d.querySelectorAll('select').forEach(s=>s.onchange=()=>{e[s.dataset.s]=s.value;if(s.dataset.s==='lt')setType(e,s.value);renderEls();draw()});
+  const f=d.querySelector('[data-f]');if(f)f.oninput=()=>{const v=Math.abs(parseFloat(f.value)),c=Math.abs(fAir(e));if(!(v>0)||!c)return;e.R1*=v/c;e.R2*=v/c;
+   d.querySelector('[data-k=R1]').value=+e.R1.toFixed(2);d.querySelector('[data-k=R2]').value=+e.R2.toFixed(2);draw()};
+  box.appendChild(d)})}
+document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{const t=b.dataset.add;
+ els.push(mk(t,{lens:{x:40,lt:'biconvex',mode:'thin',n:1.5,R1:150,R2:-150,th:8,D:40},aperture:{x:20,D:20},slit:{x:20,D:5},grating:{x:20,gm:'transmission',lines:300,phi:0}}[t]));renderEls();draw()});
+$('relay').onclick=()=>{const P=params();els=els.filter(e=>!e.relay);P.els=els;const r=relayBuild(P,100,200,10,$('ocChk').checked);
+ if(!r){$('stat').textContent='Relay not placed: the objective forms no real image. Put the sample beyond its focal length.';renderEls();draw();return}
+ els.push(r.c,r.t);if(r.o)els.push(r.o,r.e);$('det').value=+r.det.toFixed(2);renderEls();draw()};
+$('med').onchange=()=>{$('n').value=$('med').value;draw()};
+$('char').onchange=()=>{$('ang').value=$('char').value==='col'?0:12;draw()};
+['ang','n','det','oh','x0','lam','ill','obj'].forEach(i=>$(i).oninput=draw);$('ill').onchange=draw;$('obj').onchange=draw;
+/* ---------- drawing ---------- */
+function microCalc(P){const col=P.els.find(e=>e.relay==='col'),tu=P.els.find(e=>e.relay==='tube'),oc=P.els.find(e=>e.relay==='oc'),oi=objInfo(P);
+ if(!(col&&tu&&oi)||oi.ob.relay)return null;
+ const ob=oi.ob,m=LM(ob,P.nMed,1,REF),a=oi.dist,b=-(m.A*a+m.B*P.nMed)/(m.C*a+m.D*P.nMed),M1=m.A+m.C*b,fc=fAir(col),ft=fAir(tu),Mob=M1*(-ft/fc),Mobt=benchM({...P,det:tu.x+ft/10}),R={M1,Mob,Mobt};
+ if(oc){const fo=fAir(oc),P2={...P,det:oc.x+.1},r=trace(P2,act(P2),1,-1/oi.dist,REF).rays[0];R.Moc=250/fo;R.Mtf=Mob*R.Moc;R.Mt=r?r.u*250:NaN;R.Moct=R.Mt/Mobt;R.P2=P2;R.oc=oc}
+ return R}
+function micro(P){const R=microCalc(P);window._Mm=null;if(!R){$('micro').style.display='none';return}
+ const f=v=>isNaN(v)?'–':(v<0?'−':'+')+Math.abs(v).toFixed(2)+'×',ok=(a,b)=>Math.abs(a-b)<=1e-6*Math.max(1,Math.abs(a))?'<td class="ok">✓</td>':'<td class="bad">✗</td>';
+ const rw=[['Objective system M<sub>ob</sub> = M₁·(−f<sub>t</sub>/f<sub>c</sub>), M₁ = first-lens magnification',R.Mob,R.Mobt]];
+ if(R.oc){rw.push(['Ocular M<sub>oc</sub> = 250 mm / f<sub>oc</sub>',R.Moc,R.Moct],['Total M = M<sub>ob</sub>·M<sub>oc</sub>',R.Mtf,R.Mt]);window._Mm=Math.abs(R.Mt)}
+ $('microT').innerHTML='<thead><tr><th>Microscope check</th><th>Formula</th><th>Ray trace</th><th></th></tr></thead><tbody>'+rw.map(([n,a,b])=>`<tr><td>${n}</td><td>${f(a)}</td><td>${f(b)}</td>${ok(a,b)}</tr>`).join('')+'</tbody>';
+ $('micro').style.display=''}
+const view={zx:1,zy:1,ox:0,oy:0};
+function zoomAt(kx,ky,mx,my){const cv=$('cv'),W=cv.width,H=cv.height,zx=Math.min(300,Math.max(.3,view.zx*kx)),zy=Math.min(300,Math.max(.3,view.zy*ky));kx=zx/view.zx;ky=zy/view.zy;
+ view.ox=mx-W/2-(mx-W/2-view.ox)*kx;view.oy=my-H/2-(my-H/2-view.oy)*ky;view.zx=zx;view.zy=zy;draw(true)}
+function draw(fast){fast=fast===true;
+ const P=params(),L=act(P),cv=$('cv'),c=cv.getContext('2d'),W=cv.width,H=cv.height,cs=getComputedStyle(document.documentElement),ink=cs.getPropertyValue('--ink').trim(),mut=cs.getPropertyValue('--mut').trim();
+ const xd=P.X0+P.det,xmin=Math.min(0,P.X0),xmax=Math.max(xd*1.03,xmin+1),px0=x=>40+(x-xmin)/(xmax-xmin)*(W-80),px=x=>W/2+(px0(x)-W/2)*view.zx+view.ox;
+ const ymax=Math.max(40,...L.filter(e=>e.t==='lens').map(e=>e.D*.58)),py0=y=>H/2-y/ymax*(H/2-22),py=y=>H/2+(py0(y)-H/2)*view.zy+view.oy;
+ c.clearRect(0,0,W,H);c.font='12px sans-serif';
+ const oi=objInfo(P);$('naTop').textContent=oi?oi.NA.toFixed(2):'–';$('naSub').textContent=oi?`n=${P.nMed.toFixed(3)} · θ=${deg(oi.th).toFixed(1)}°`:'no lens';
+ $('nV').textContent=P.nMed.toFixed(3);$('angV').textContent=P.ang+'°';$('angL').textContent=P.char==='col'?'Tilt angle':P.char==='conv'?'Convergence half-angle':'Divergence half-angle';$('lamW').style.display=P.white?'none':'';
+ if(oi&&P.nMed>1.0005){const xv=P.X0+(oi.dist-0)/10;c.fillStyle='rgba(70,130,255,.13)';c.fillRect(px(P.X0),12,px(P.X0+oi.dist/10)-px(P.X0),H-24);c.fillStyle=mut;c.textAlign='left';c.fillText('n = '+P.nMed.toFixed(3),px(P.X0)+6,26)}
+ const col=L.find(e=>e.relay==='col'),tu=L.find(e=>e.relay==='tube');
+ if(col&&tu){c.fillStyle='rgba(150,150,150,.13)';c.fillRect(px(P.X0+col.x),12,px(P.X0+tu.x)-px(P.X0+col.x),H-24);c.fillStyle=mut;c.textAlign='center';c.fillText('∞ space (parallel rays)',(px(P.X0+col.x)+px(P.X0+tu.x))/2,26)}
+ if(tu){const xp=P.X0+tu.x+fAir(tu)/10;c.strokeStyle=mut;c.setLineDash([1,3]);c.beginPath();c.moveTo(px(xp),12);c.lineTo(px(xp),H-12);c.stroke();c.fillStyle=mut;c.textAlign='center';c.fillText('Primary image plane',px(xp),H-32)}
+ c.strokeStyle=mut;c.setLineDash([4,4]);c.beginPath();c.moveTo(px(xmin),py(0));c.lineTo(px(xmax),py(0));c.stroke();c.setLineDash([]);
+ let spread=null;const ls=lams(P);c.lineWidth=1;
+ for(const l of ls){const rgb=wl2rgb(l).map(v=>Math.round(v*215+30)).join(',');
+  for(const yo of pts(P,5)){for(const [dy,s] of fan(P,21)){const sg=[];trace(P,L,yo+dy,s,l,sg);
+    for(const g of sg){c.strokeStyle=`rgb(${rgb})`;c.globalAlpha=g.m?.55:.85;c.setLineDash(g.m?[5,4]:[]);c.beginPath();c.moveTo(px(g.x1),py(g.y1));c.lineTo(px(g.x2),py(g.y2));c.stroke()}}
+   if(col&&l===ls[0]){const sl=bundleSlopes(P,L,yo,l,col);if(sl.length){const sp=Math.max(...sl)-Math.min(...sl);spread=Math.max(spread||0,sp)}}}}
+ c.globalAlpha=1;c.setLineDash([]);
+ let li=0;for(const e of L){const x=px(P.X0+e.x),t=thk(e);c.strokeStyle=ink;c.fillStyle=ink;c.lineWidth=2;
+  if(e.t==='lens'){const top=py(e.D/2),bot=py(-e.D/2),w=Math.max(6,(px(P.X0+e.x+t/20)-px(P.X0+e.x-t/20))/2),neg=fAir(e)<0;c.beginPath();
+   if(!neg)c.ellipse(x,py(0),w,(bot-top)/2,0,0,7);else{c.moveTo(x-w,top);c.quadraticCurveTo(x+1,py(0),x-w,bot);c.lineTo(x+w,bot);c.quadraticCurveTo(x-1,py(0),x+w,top);c.closePath()}
+   c.globalAlpha=.15;c.fill();c.globalAlpha=1;c.stroke();
+   if(t>0){const pl=planes(e,e===L.find(q=>q.t==='lens')?P.nMed:1,1,REF),xh=P.X0+e.x-t/20+pl.hF/10,xh2=P.X0+e.x+t/20+pl.hB/10;
+    c.strokeStyle='#1aa39a';c.lineWidth=1;c.setLineDash([3,3]);for(const [xx,tx] of[[xh,'H'],[xh2,'H′']]){c.beginPath();c.moveTo(px(xx),top);c.lineTo(px(xx),bot);c.stroke();c.fillStyle='#1aa39a';c.textAlign='center';c.fillText(tx,px(xx),top-4)}c.setLineDash([])}}
+  else if(e.t==='grating'){c.setLineDash([2,3]);c.beginPath();c.moveTo(x,10);c.lineTo(x,H-10);c.stroke();c.setLineDash([])}
+  else{const h=e.D/2;c.lineWidth=4;c.beginPath();c.moveTo(x,10);c.lineTo(x,py(h));c.moveTo(x,py(-h));c.lineTo(x,H-10);c.stroke()}
+  c.fillStyle=mut;c.textAlign='center';c.fillText((e.name||LAB[e.t])+(e.relay?'':' '+e.x+'cm'),x,H-4-(li++%2)*14)}
+ c.strokeStyle=ink;c.lineWidth=3;c.beginPath();if(P.line){c.moveTo(px(P.X0),py(-P.H/2));c.lineTo(px(P.X0),py(P.H/2))}else{c.arc(px(P.X0),py(0),3,0,7)}c.stroke();if(P.F){c.fillStyle=ink;c.font='bold 20px sans-serif';c.textAlign='right';c.fillText('F',px(P.X0)-6,py(P.H/2)+4);c.font='12px sans-serif'}
+ c.fillStyle=cs.getPropertyValue('--th').trim();c.fillRect(px(xd)-4,py(30),8,py(-30)-py(30));
+ c.fillStyle=mut;c.textAlign='left';c.fillText('Object',px(P.X0)-4,H-4);c.textAlign='right';c.fillText('CCD',px(xd)+6,H-4);
+ const M=benchM(P),rms=spot(P,ls[0]);
+ $('stat').textContent=`Bench M = ${isNaN(M)?'–':M.toFixed(2)}× · RMS spot on CCD = ${isNaN(rms)?'–':(rms*1000).toFixed(1)} µm`+(isNaN(M)?'':M<0?' · inverted image (rotated 180°)':' · upright image')+(isNaN(rms)?'':rms<0.02?' · in focus':' · defocused')+(spread!==null?` · rays after collimator: angle spread ${(spread*1000).toFixed(3)} mrad`:'');
+ window._M=M;if(!fast){objview(P);ccd(P,L);dof();micro(P)}}
+function blur(a,S,r){const t=new Float32Array(S*S),o=new Float32Array(S*S);
+ for(let j=0;j<S;j++)for(let i=0;i<S;i++){let v=0;for(let d=-r;d<=r;d++){const q=i+d;if(q>=0&&q<S)v+=a[j*S+q]}t[j*S+i]=v}
+ for(let j=0;j<S;j++)for(let i=0;i<S;i++){let v=0;for(let d=-r;d<=r;d++){const q=j+d;if(q>=0&&q<S)v+=t[q*S+i]}o[j*S+i]=v}return o}
+function objview(P){const g=$('obv').getContext('2d'),S=300,k=S/60,Yv=y=>(30-y)*k;g.fillStyle='#000';g.fillRect(0,0,S,S);g.fillStyle='#fff';
+ if(P.F){for(const [a,b,c,d] of FR)g.fillRect(((a-.3)*P.H+30)*k,Yv((d-.5)*P.H),(b-a)*P.H*k,(d-c)*P.H*k)}
+ else if(P.line)g.fillRect(S/2-40,Yv(P.H/2),80,P.H*k);else{g.beginPath();g.arc(S/2,S/2,3,0,7);g.fill()}}
+function ccd(P,L){const cc=$('ccd'),g=cc.getContext('2d'),S=300,B=[0,1,2].map(()=>new Float32Array(S*S)),H1=[0,1,2].map(()=>new Float32Array(S));
+ const put=(w,y,rgb)=>{const i=Math.round((w+30)/60*(S-1)),j=Math.round((30-y)/60*(S-1));if(i>=0&&i<S&&j>=0&&j<S)for(let k=0;k<3;k++)B[k][j*S+i]+=rgb[k]};
+ const T=Math.tan(rad(P.ang)),rnd=(()=>{let a=12345;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}})();
+ for(const l of lams(P)){const rgb=P.white?wl2rgb(l):[1,1,1];
+  if(P.F){for(const [w0,y0] of fpts(P.H)){
+    if(P.char==='div'){const rot=rnd()*6.2832;for(let i=0;i<48;i++){const r=Math.sqrt((i+rnd())/48)*T,a=i*2.39996323+rot;for(const q of trace(P,L,y0,r*Math.cos(a),l,null,w0,r*Math.sin(a)).hits)put(q.w,q.y,rgb)}}
+    else{const a=P.H/2||1,sy=P.char==='col'?T:-y0*T/a,sw=P.char==='col'?0:-w0*T/a;for(const q of trace(P,L,y0,sy,l,null,w0,sw).hits)put(q.w,q.y,rgb)}}}
+  else for(const yo of pts(P,21))for(const [dy,s] of fan(P,61))for(const q of trace(P,L,yo+dy,s,l).hits){const j=Math.round((30-q.y)/60*(S-1));if(j>=0&&j<S)for(let k=0;k<3;k++)H1[k][j]+=rgb[k]}}
+ if(P.F){let rs=spot(P,lams(P)[0]);if(isNaN(rs))rs=0;const r=Math.min(8,Math.max(1,Math.round(rs*5/6)));for(let k=0;k<3;k++)B[k]=blur(B[k],S,r)}
+ else for(let k=0;k<3;k++)for(let j=0;j<S;j++){let v=0;for(let d=-2;d<=2;d++)v+=H1[k][j+d]||0;for(let i=S/2-40;i<S/2+40;i++)B[k][j*S+i]=v}
+ const mx=Math.max(1e-9,...B.map(a=>a.reduce((m,v)=>v>m?v:m,0))),im=g.createImageData(S,S);
+ for(let n=0;n<S*S;n++){for(let k=0;k<3;k++)im.data[4*n+k]=Math.round(255*Math.pow(B[k][n]/mx,.6));im.data[4*n+3]=255}
+ g.putImageData(im,0,0)}
+function dof(){const P=params();if($('sync').checked){const o=objInfo(P);if(o)$('dNA').value=+o.NA.toFixed(6);$('dL').value=P.lam}
+ const NA=+$('dNA').value,l=+$('dL').value,M=+$('dM').value,d=+$('dW').value;
+ if(!(NA>0&&M>0&&l>0)){$('oDoF').textContent=$('oDoFd').textContent='–';return null}
+ const r=dofCalc(NA,l,M,d);$('oDoF').textContent=r.D.toFixed(2)+' µm';$('oDoFd').textContent=r.Dd.toFixed(2)+' µm';return{M,NA,...r}}
+['dNA','dL','dM','dW'].forEach(i=>$(i).oninput=()=>{if(i==='dNA'||i==='dL')$('sync').checked=false;dof()});$('sync').onchange=draw;
+$('useM').onclick=()=>{const m=window._Mm!=null?window._Mm:Math.abs(window._M);if(!isNaN(m)){$('dM').value=+m.toFixed(3);dof()}};
+$('addCfg').onclick=()=>{const r=dof();if(!r)return;cfgs.push(r);rt()};
+function rt(){$('tb').innerHTML=cfgs.map((r,i)=>`<tr><td><b>${r.M.toFixed(1)}×</b></td><td>${r.NA.toFixed(2)}</td><td>${r.D.toFixed(2)}</td><td>${r.Dd.toFixed(2)}</td><td><button class="del" data-i="${i}" aria-label="Remove row">✕</button></td></tr>`).join('');
+ document.querySelectorAll('#tb .del').forEach(b=>b.onclick=()=>{cfgs.splice(+b.dataset.i,1);rt()})}
+/* ---------- self-tests ---------- */
+function tests(){const T=[],add=(n,e,g,ok)=>T.push([n,e,g,ok]),near=(a,b,t)=>Math.abs(a-b)<=t;
+ const P0=()=>({X0:0,det:60,nMed:1,char:'div',ang:12,line:true,H:10,lam:550,white:false,els:[lens0()]});
+ let r=dofCalc(0.066519,550,10,0.0014);add('D.O.F., NA 0.0665, M 10, λ 550, d 0.0014','588.32 µm',r.D.toFixed(2)+' µm',near(r.D,588.32,.1));add('Depth of Field for the same case','5.88 µm',r.Dd.toFixed(2)+' µm',near(r.Dd,5.88,.01));
+ r=dofCalc(0.9,550,1000,0.0014);add('D.O.F., NA 0.90, M 1000, λ 550, d 0.0014','0.73 µm',r.D.toFixed(3)+' µm',near(r.D,0.73,.01));
+ r=dofCalc(0.9,550,1000,0.0041);add('Same case with d = 0.0041 (as typed in your note): 0.73 µm needs d = 0.0014','1.48 µm',r.D.toFixed(3)+' µm',near(r.D,1.478,.01));
+ let o=objInfo(P0());add('NA from geometry: lens Ø40 at 30 cm in air','0.0665 (θ = 3.8°)',o.NA.toFixed(4)+` (θ = ${deg(o.th).toFixed(1)}°)`,near(o.NA,.0665,1e-4));
+ add('Biconvex n 1.5, R = ±150 mm: f','150 mm',fAir(lens0()).toFixed(2)+' mm',near(fAir(lens0()),150,.01));
+ let e=lens0({R1:75,R2:0});add('Plano-convex R1 = 75 mm: f','150 mm',fAir(e).toFixed(2)+' mm',near(fAir(e),150,.01));
+ e=lens0({R1:-150,R2:150});add('Biconcave R = ∓150 mm: f (diverging)','−150 mm',fAir(e).toFixed(2)+' mm',near(fAir(e),-150,.01));
+ e=lens0({lt:'meniscus-concave'});setType(e,'meniscus-concave');add('Concave meniscus keeps |f| and is diverging','−150 mm',fAir(e).toFixed(2)+' mm',near(fAir(e),-150,.01));
+ e=lens0({R1:100,R2:-100,mode:'thick',th:10});let pl=planes(e,1,1,REF);
+ add('Thick lens n 1.5, R = ±100, t = 10: f','101.69 mm',fAir(e).toFixed(2)+' mm',near(fAir(e),101.69,.01));
+ add('Principal planes H (from vertex 1), H′ (from vertex 2)','+3.39 mm, −3.39 mm',pl.hF.toFixed(2)+' mm, '+pl.hB.toFixed(2)+' mm',near(pl.hF,3.39,.01)&&near(pl.hB,-3.39,.01));
+ let P=P0();add('Thin-lens imaging: u = 30 cm, f = 150 mm, CCD at 60 cm: spot','≈ 0 µm',(spot(P,550)*1000).toExponential(1)+' µm',spot(P,550)<1e-6);
+ add('Lateral magnification of that image','−1.00×',benchM(P).toFixed(2)+'×',near(benchM(P),-1,1e-6));
+ P=P0();P.nMed=1.333;const s2=spot(P,550),f2=-1/LM(P.els[0],1.333,1,REF).C;
+ add('Immersion n = 1.333 changes the objective’s focal length','224.9 mm (was 150)',f2.toFixed(1)+' mm',near(f2,224.9,.5));
+ add('…and the focus on the CCD: blur grows','spot > 1 mm',s2.toFixed(2)+' mm',s2>1);
+ P=P0();P.nMed=1.515;add('NA grows with n (same geometry)','0.101',objInfo(P).NA.toFixed(3),near(objInfo(P).NA,.101,.001));
+ P=P0();const rb=relayBuild(P);P.els.push(rb.c,rb.t);P.det=rb.det;const L=act(P),sl=bundleSlopes(P,L,0,550,rb.c);
+ add('Infinity relay: max ray slope leaving the collimator','0 mrad',(Math.max(...sl.map(Math.abs))*1000).toExponential(1)+' mrad',sl.length>0&&Math.max(...sl.map(Math.abs))<1e-9);
+ add('Infinity relay: CCD in focus (tube lens focal plane)','spot ≈ 0 µm',(spot(P,550)*1000).toExponential(1)+' µm',spot(P,550)<1e-6);
+ let g=gratOrders(0,0,550,1,500,false).find(q=>q.m===1);add('Transmission grating 500 l/mm, 550 nm, normal incidence: m = 1','15.96°',deg(g.ao).toFixed(2)+'°',near(deg(g.ao),15.96,.01));
+ g=gratOrders(0,rad(10),550,1,500,true).find(q=>q.m===0);add('Reflection grating tilted 10°: zeroth order (mirror)','200° (back-reflected, 2φ off)',(deg(g.ao)%360).toFixed(2)+'°',near(deg(g.ao)%360,200,.01));
+ P=P0();P.els=[mk('grating',{x:10,gm:'transmission',lines:100,phi:0}),mk('grating',{x:20,gm:'transmission',lines:100,phi:0}),mk('grating',{x:30,gm:'transmission',lines:100,phi:0})];
+ const t0=performance.now(),hh=trace(P,act(P),0,0,550).hits;add('Three gratings in series: no infinite recursion','finishes, finite rays',hh.length+' rays in '+Math.round(performance.now()-t0)+' ms',hh.length>0&&hh.length<5000);
+ P=P0();P.els[0].D=0;add('Aperture/lens with opening 0 blocks every ray','0 rays reach the CCD',trace(P,act(P),0,0.05,550).hits.length+' rays',trace(P,act(P),0,0.05,550).hits.length===0);
+ const img=(P,w0,y0)=>{const L=act(P),h=cone(12,.02).flatMap(([sy,sw])=>trace(P,L,y0,sy,550,null,w0,sw).hits);return{w:h.reduce((a,q)=>a+q.w,0)/h.length,y:h.reduce((a,q)=>a+q.y,0)/h.length}};
+ P=P0();let im=img(P,3,2);add('Letter F point (right 3 mm, up 2 mm), one lens, M = −1','(−3, −2) mm: inverted and reversed',`(${im.w.toFixed(2)}, ${im.y.toFixed(2)}) mm`,near(im.w,-3,1e-6)&&near(im.y,-2,1e-6));
+ P=P0();P.els.push(lens0({x:90}));P.det=120;im=img(P,3,2);add('Two imaging lenses (f 150 mm at 30 and 90 cm): M = +1','(3, 2) mm: upright',`(${im.w.toFixed(2)}, ${im.y.toFixed(2)}) mm`,near(im.w,3,1e-6)&&near(im.y,2,1e-6));
+ P=P0();P.det=70;add('CCD 10 cm behind the image plane: blur','RMS spot > 1 mm',spot(P,550).toFixed(2)+' mm',spot(P,550)>1);
+ P=P0();const rb2=relayBuild(P,100,200,10,true);P.els.push(rb2.c,rb2.t,rb2.o,rb2.e);P.det=rb2.det;const mc=microCalc(P);
+ add('Infinity microscope, objective system: M₁·(−f_t/f_c) = (−1)(−200/100)','+2.00× (formula = ray trace)',`${mc.Mob.toFixed(2)}× / ${mc.Mobt.toFixed(2)}×`,near(mc.Mob,2,1e-9)&&near(mc.Mobt,2,1e-6));
+ add('Ocular: M = 250 mm / f_oc = 250/25','10.00× (formula = ray trace)',`${mc.Moc.toFixed(2)}× / ${mc.Moct.toFixed(2)}×`,near(mc.Moc,10,1e-9)&&near(mc.Moct,10,1e-6));
+ add('Total microscope M = M_ob·M_oc (angular size vs 250 mm)','+20.00× (formula = ray trace)',`${mc.Mtf.toFixed(2)}× / ${mc.Mt.toFixed(2)}×`,near(mc.Mtf,20,1e-9)&&near(mc.Mt,20,1e-6));
+ const sl2=bundleSlopes(mc.P2,act(mc.P2),1,550,mc.oc);add('Beam leaving the ocular is parallel (relaxed eye)','angle spread 0 mrad',((Math.max(...sl2)-Math.min(...sl2))*1000).toExponential(1)+' mrad',sl2.length>0&&Math.max(...sl2)-Math.min(...sl2)<1e-9);
+ add('Eye lens at the exit pupil: retina (CCD) in focus','spot ≈ 0 µm',(spot(P,550)*1000).toExponential(1)+' µm',spot(P,550)<1e-6);
+ $('tests').innerHTML=T.map(([n,e,g,ok])=>`<tr><td>${n}</td><td>${e}</td><td>${g}</td><td class="${ok?'ok':'bad'}">${ok?'✓':'✗'}</td></tr>`).join('')}
+const DEF={obj:'line',oh:10,x0:0,ill:'mono',lam:550,char:'div',ang:12,med:'1',n:1,det:60,dM:10,dW:0.0014};
+function resetLenses(){els=[lens0()];$('det').value=60;$('stat').textContent='';renderEls();draw()}
+function resetAll(){Object.assign(view,{zx:1,zy:1,ox:0,oy:0});$('ocChk').checked=true;for(const k in DEF)$(k).value=DEF[k];$('sync').checked=true;cfgs=[];rt();resetLenses()}
+const cvE=$('cv'),cpos=e=>{const r=cvE.getBoundingClientRect(),k=cvE.width/r.width;return[(e.clientX-r.left)*k,(e.clientY-r.top)*k]};
+cvE.addEventListener('wheel',e=>{e.preventDefault();const [mx,my]=cpos(e),k=(e.deltaY||e.deltaX)<0?1.2:1/1.2;zoomAt(e.altKey?1:k,e.shiftKey?1:k,mx,my)},{passive:false});
+let drag=null;cvE.onpointerdown=e=>{drag={x:e.clientX,y:e.clientY};cvE.setPointerCapture(e.pointerId)};
+cvE.onpointermove=e=>{if(!drag)return;const k=cvE.width/cvE.getBoundingClientRect().width;view.ox+=(e.clientX-drag.x)*k;view.oy+=(e.clientY-drag.y)*k;drag={x:e.clientX,y:e.clientY};draw(true)};
+cvE.onpointerup=cvE.onpointercancel=()=>{drag=null};
+$('zin').onclick=()=>zoomAt(1.5,1.5,cvE.width/2,cvE.height/2);$('zout').onclick=()=>zoomAt(1/1.5,1/1.5,cvE.width/2,cvE.height/2);
+$('zfit').onclick=()=>{Object.assign(view,{zx:1,zy:1,ox:0,oy:0});draw(true)};
+$('rstL').onclick=resetLenses;$('rstA').onclick=resetAll;
+renderEls();draw();try{tests()}catch(err){$('tests').innerHTML='<tr><td colspan="4">Test error: '+err.message+'</td></tr>'}
+</script></body></html>
